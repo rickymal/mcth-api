@@ -43,5 +43,9 @@ urlpatterns = [
     # mentores
     path('show_disposable_mentors/',views.show_disposable_mentors),
     path('select_mentor/',views.select_mentor),
+
+
+    #chatbot
+    path('chatbot',views.dialog),
     
 ]

@@ -58,6 +58,32 @@ state = defaultdict(None)
 def unselect_mentor(request):
     pass
 
+
+from .Chatbot import ChatbotInstance
+
+@csrf_exempt
+def dialog(request):
+    
+    # O token será gerado pelo aplicativo que consumir esta API (devido ao Discord)
+    user_id = request.user.id
+    exist_student = Student.objects.filter(user_id = user_id).exists()
+    if exist_student is None:
+        return HttpResponse("Sorry, i don't recognize you")
+
+    data = json.loads(request.body)
+    chatbot = ChatbotInstance.get(token=data['token'])
+    response = chatbot.undestandPhrase(data['message'])
+    message = f"Hello, {request.user.first_name} {request.user.last_name}! {response}"
+
+
+
+    return JsonResponse({
+        "message" : message
+
+    }, safe = False)
+
+
+
 def select_mentor(request):
     """
     Esta função já partirá do princípio que a lista dos mentores assim como seu identificado já foi enviado para o front-end, logo o front-end apenas irá realizar uma requisição
@@ -297,15 +323,18 @@ def create_challenge(request):
 
 @csrf_exempt
 def loginUser(request):
+    print("ASHJDASDHI".center(80,'-'))
     username = request.GET.get('username')
     password = request.GET.get('password')
 
     print(f'username : {username} and password : {password}')
-
+    
+    logout(request)
+    
     user_authentication = authenticate(username = username, password = password,)
-    print(f"User {username} authenticated")
+    #print(f"User {username} authenticated")
     login_field = login(request, user_authentication)
-    print(f"User {username} logged")
+    #print(f"User {username} logged")
 
     if username is not None:                
         return JsonResponse({
