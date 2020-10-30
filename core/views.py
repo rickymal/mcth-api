@@ -7,11 +7,16 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.csrf import csrf_exempt
 import json
 
+from django.contrib.auth.decorators import login_required
+
 from django.contrib.auth.models import User
 
 from django.contrib.auth import authenticate, login, logout
 
 import logging
+
+from dateutil import parser
+
 
 # Create your views here.
 
@@ -58,30 +63,66 @@ state = defaultdict(None)
 def unselect_mentor(request):
     pass
 
+from .models import Judge
 
-from .Chatbot import ChatbotInstance
+
+
+
+def createJudger(request):
+    pass
+
+from django.core import serializers
 
 @csrf_exempt
-def dialog(request):
+@login_required
+def get_teams(request):
+    judger = Judge.objects.get(user_id = request.user)
+    teams = Team.objects.filter(challenge_id = judger.challenge_id) # Apenas a equipe que contem o desafio do jurado
+
+
+
+    lofs = list(teams.values())
+    challenges_ids = [x['challenge_id'] for x in lofs]
+
+    challenge_list = []
+    for x in challenges_ids:
+        challenge_unique = Challenge.objects.get(id = x)
+        challenge_list.append({
+            "id" : challenge_unique.id,
+            "name" : challenge_unique.name,
+            "challenger_enterprise" : challenge_unique.empresa_desafiadora
+        })
+
+
+    for ind,val in enumerate(lofs):
+        lofs[ind]['challenge_id'] = challenge_list[ind]
+
+
+
+    temp = lofs
+    print(temp)
+    json_format = JsonResponse(temp,safe = False ) # Retornando os dados no estilo json
+    print(json_format)
     
-    # O token será gerado pelo aplicativo que consumir esta API (devido ao Discord)
-    user_id = request.user.id
-    exist_student = Student.objects.filter(user_id = user_id).exists()
-    if exist_student is None:
-        return HttpResponse("Sorry, i don't recognize you")
+    
+    
+    
+    return json_format
+    pass
 
-    data = json.loads(request.body)
-    chatbot = ChatbotInstance.get(token=data['token'])
-    response = chatbot.undestandPhrase(data['message'])
-    message = f"Hello, {request.user.first_name} {request.user.last_name}! {response}"
+@csrf_exempt
+def set_points(request):
+    # Receber o juiz
+    judger = Judge.objects.get(user_id = request.user)
+
+    # Realizar a inserção da nota 
+    team_id = request.GET.get("team_id") # Obter o team_id que será enviado pelo sistema
+    print("ID DO SISTEMA",team_id)
+    team = Team.objects.get(id = int(team_id))
 
 
-
-    return JsonResponse({
-        "message" : message
-
-    }, safe = False)
-
+    return HttpResponse("OK")
+    pass
 
 
 def select_mentor(request):
@@ -99,7 +140,7 @@ def select_mentor(request):
     student = Student.objects.get(user_id = request.user)
     team = student.team_id
     
-    from dateutil import parser
+    
     
 
     # Verificar se a mentoria já foi selecionada.
@@ -108,17 +149,20 @@ def select_mentor(request):
     mentor_model = Mentor.objects.get(id = mentor_id)
     print(type(mentor_model))
     try:
-        r = Mentoring.objects.filter(mentor = mentor_model)
-        mentoring_already_made = r.filter(time_meeting = data_info_formated)
-
-        print("ERROR".center(80,'-'))
-        print(mentoring_already_made)
-        if len(mentoring_already_made) >= 1:
-            return HttpResponse("Mentoria já cadastrada")
-        
+        mentoring_model = Mentoring.objects.get(mentor = mentor_model,team = None, time_meeting = data_info_formated) # Captura todas as mentorias disponíveis do mentor
     except:
-        print("an error has occur")
-        pass
+        return HttpResponse("Mentoria não encontrada")
+    print("DASDHJH".center(80,'-'))
+    print(mentoring_model)
+
+    
+
+    
+
+    
+    mentoring_model.team = team
+    mentoring_model.save()
+    return HttpResponse("Mentoria registrada!")
 
     # Inserindo a nova mentoria
 
@@ -186,11 +230,33 @@ def show_disposable_mentors(request):
     return JsonResponse(values,safe = False)
 
     pass
+
+
 def insert_data_meeting(request):
     """
     Função que fará a inserção dos horário de mentoria
     """
-    pass
+
+    user_model = request.user # usuário precisa ser um mentor
+    meeting_hour = request.GET.get('meeting_hour')
+    try:
+        mentor_model = Mentor.objects.get(user = user_model)
+    except:
+        return HttpResponse("Usuário não é um mentor")
+
+    from datetime import datetime
+
+    #datetime_formated = datetime.strptime(date = meeting_hour,format = "%d/%m/%Y %H:%M:%S")
+    
+    datetime_formated = parser.parse(meeting_hour)
+    print(f"Datetime formated : {datetime_formated}")
+    
+    time_meeting = datetime_formated
+
+
+    Mentoring.objects.create(mentor = mentor_model,team = None,time_meeting= time_meeting)
+
+    return HttpResponse("WORK!")
 
 @csrf_exempt
 def integrate_team(request):
@@ -241,7 +307,7 @@ def integrate_team(request):
     return JsonResponse("OK", safe = False)
         
 
-from django.contrib.auth.decorators import login_required
+
 
 
 @csrf_exempt
@@ -305,6 +371,7 @@ def create_team(request):
 
 
 def create_challenge(request):
+    # No momento a criação dos desafios seá feita diretamente na página do administrador
 
     challenge_name = request.GET.get("challenge")
     check_exists = Challenge.objects.filter(name = challenge_name)
@@ -346,16 +413,18 @@ def loginUser(request):
         })
     
     
-    
-
 
 @csrf_exempt
-def registerUser(request):
+def register(request):
     username = request.GET.get('username')
     password = request.GET.get('password')
     email = request.GET.get('email')
     first_name = request.GET.get('first_name')
     last_name = request.GET.get('last_name')
+
+    category = request.GET.get('category')
+    challenge_id = request.GET.get('challenge') # será o id do desafio pois na tela de login o jurado recebera o id do desafio
+    challenge = challenge_id
 
     #usuario = authenticate(username = username, password = password,)
     check_user = User.objects.filter(email = email)
@@ -374,7 +443,19 @@ def registerUser(request):
         user_model.first_name = first_name
         user_model.last_name = last_name
         user_model.save()
-        student_model = Student.objects.create(user_id = user_model, team_id = None, isLeader = False)
+
+
+        if category == 'student':
+            student_model = Student.objects.create(user_id = user_model, team_id = None, isLeader = False)
+        elif category == 'judger':
+            challenge = Challenge.objects.get(id = challenge_id)
+            jugder_mode = Judge.objects.create(user_id = user_model, challenge = challenge)
+            pass
+        elif category == 'mentor':
+            #mentor_model = Mentor.objects.create(user = user_model, challenge)
+            challenge = Challenge.objects.get(id = challenge_id)
+            mentor_model = Mentor.objects.create(user = user_model, challenge = challenge)
+            
         
         return JsonResponse({
             'status' : 'created'

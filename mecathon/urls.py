@@ -15,8 +15,6 @@ Including another URLconf
 """
 
 from django.urls import include, path
-
-
 from django.contrib import admin
 from django.urls import path
 from core import views
@@ -25,27 +23,32 @@ urlpatterns = [
     
     # Registro do usuário 
     #path('register/', views.registerPerson),
-    path('create_team/',views.create_team),
     path('integrate_team/',views.integrate_team),
     path('getout_team/',views.getout_team),
 
     path('login/',views.loginUser),
 
-    path('register/',views.registerUser),
+    path('register/',views.register),
 
     # Criação do desafio
     path('challenge/',views.create_challenge),
 
+    # Time
+    path('create_team/',views.create_team),
 
     #integração de times
-    path('integrate_team/',views.integrate_team),
+    path('integrate_team',views.integrate_team),
 
     # mentores
     path('show_disposable_mentors/',views.show_disposable_mentors),
     path('select_mentor/',views.select_mentor),
+    path('insert_data_meeting/',views.insert_data_meeting),
+
+    # Obter a lista dos times 
+    path('get_teams',views.get_teams),
 
 
-    #chatbot
-    path('chatbot',views.dialog),
+    #dar notaa
+    path('set_points',views.set_points),
     
 ]

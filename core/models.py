@@ -11,18 +11,32 @@ class Challenge(models.Model):
     empresa_desafiadora = models.CharField(max_length = 20)
     description = models.TextField()
 
-    def __str__(self):
+    def __str__(self,):
         return self.name
 
+
+
+# Este objeto pode conter Juizes repetidos
+class Judge(models.Model):
+    user_id = models.OneToOneField(User,on_delete = models.CASCADE)
+    challenge = models.ForeignKey(Challenge,on_delete = models.CASCADE)
+
+    def __str__(self,):
+        return self.user_id.first_name + " " +self.user_id.last_name
+
+
 class Team(models.Model):
-    challenge_id = models.ForeignKey(Challenge,on_delete = models.SET_NULL, null = True)
+    challenge = models.ForeignKey(Challenge,on_delete = models.SET_NULL, null = True, blank=True)
+    noteJudged = models.FloatField(default = 0.0)
+    judger_assign = models.ForeignKey(Judge,on_delete = models.SET_NULL, null = True, default = None, blank=True)
 
     def __str__(self):
         return f"Team {self.id} for [{self.challenge_id.name}] challenge "
 
+
 class Student(models.Model):
     user_id = models.OneToOneField(User,on_delete = models.CASCADE)
-    team_id = models.ForeignKey(Team,on_delete = models.SET_NULL, null = True)
+    team_id = models.ForeignKey(Team,on_delete = models.SET_NULL, null = True, blank=True)
     isLeader = models.BooleanField()
 
     def __str__(self):
@@ -30,7 +44,8 @@ class Student(models.Model):
 
 class Mentor(models.Model):
     user = models.OneToOneField(User,on_delete = models.CASCADE)
-    challenge = models.OneToOneField(Challenge, on_delete = models.CASCADE) # Um mentor esta associado a um desafio
+    challenge = models.ForeignKey(Challenge, on_delete = models.CASCADE) # Um mentor esta associado a um desafio
+    
 
     def __str__(self):
         if self.user is None:
@@ -42,7 +57,15 @@ class Mentoring(models.Model):
     team = models.ForeignKey(Team, on_delete = models.CASCADE, null = True)
     time_meeting = models.DateTimeField()
 
-
     def __str__(self):
-        return f"[Mentoria] : {self.mentor.user.first_name} para equipe {self.team.id}"
+    
+        response = f"[Mentoria] : {self.mentor.user.first_name}"
+        if self.team is not None:
+            m = f" para equipe {self.team.id}"
+        else:
+            m = " sem equipe a mentorar"
+        response += m
+        return response 
+
+
 
