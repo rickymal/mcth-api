@@ -21,34 +21,35 @@ from core import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # Registro do usuário 
-    #path('register/', views.registerPerson),
-    path('integrate_team/',views.integrate_team),
-    path('getout_team/',views.getout_team),
+    # Registro do usuário e criação do mesmo
 
     path('login/',views.loginUser),
-
     path('register/',views.register),
-
-    # Criação do desafio
-    path('challenge/',views.create_challenge),
+    path('get_user_info',views.get_user_info),
+    path('get_selections_mentor',views.get_selections_mentor),
+    path("check_user_type",views.check_user_type),
 
     # Time
     path('create_team/',views.create_team),
-
-    #integração de times
-    path('integrate_team',views.integrate_team),
+    path('integrate_team/',views.integrate_team),
+    path('getout_team/',views.getout_team),
+    path('get_teams',views.get_teams), # Obter a lista dos times 
+    path('integrate_team',views.integrate_team), #integração de times
+    path('sendprojectlink',views.sendprojectlink),
 
     # mentores
     path('show_disposable_mentors/',views.show_disposable_mentors),
     path('select_mentor/',views.select_mentor),
     path('insert_data_meeting/',views.insert_data_meeting),
 
-    # Obter a lista dos times 
-    path('get_teams',views.get_teams),
-
-
-    #dar notaa
-    path('set_points',views.set_points),
     
+    #Jurado
+    path('set_points',views.set_points), # dar nota
+    path('get_listOf_project',views.get_listOf_project),
+    
+
+    # Criação do desafio
+    path('challenge/',views.create_challenge), #Não implementado!
+
+
 ]

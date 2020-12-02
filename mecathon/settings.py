@@ -38,6 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "core",
+    "corsheaders",
+
+    
 ]
 
 MIDDLEWARE = [
@@ -48,7 +51,49 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    "corsheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsPostCsrfMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
 ]
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS =  True
+CORS_ALLOW_ALL_ORIGINS = True
+from corsheaders.defaults import default_headers
+
+_HEADERS = [
+    'access-control-request-method',
+    'access-control-request-headers',
+    'access-control-allow-origin',
+    'access-control-allow-methods',
+    'access-control-max-age',
+    'vary',
+    'content-length',
+    'x-content-type-options',
+    'x-frame-options',
+    'host',
+    *["access-control-allow-headers,access-control-allow-method,access-control-allow-origin,content-type"],
+    'accept-language',
+    'accept-encoding',
+    'accept',
+    'referer',
+    'sec-fetch-mode',
+    'sec-fetch-dest',
+    
+
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + _HEADERS 
+CORS_PREFLIGHT_MAX_AGE = 3600
+
+
+from corsheaders.defaults import default_methods
+
+CORS_ALLOW_METHODS = list(default_methods)
+
+#CSRF_COOKIE_SAMESITE = "None" 
+#SESSION_COOKIE_SAMESITE = "None"
 
 ROOT_URLCONF = 'mecathon.urls'
 
